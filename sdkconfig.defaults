@@ -1,0 +1,37 @@
+# --- Hedef ve bellek ---
+CONFIG_IDF_TARGET_ESP32S3=y
+
+# 8MB PSRAM, Octal, 80MHz - kamera kare tamponlari ve ESP-DL model/
+# tensor bellegi icin gereklidir.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y
+CONFIG_SPIRAM_MALLOC_ALWAYSINTERNAL=16384
+
+# Kamera + ESP-DL calisirken flash 16MB varsayilir.
+CONFIG_ESPTOOLPY_FLASHSIZE_16MB=y
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# --- Konsol / seri arayuz (serial_cli icin USB-Serial/JTAG veya UART0) ---
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+CONFIG_ESP_CONSOLE_SECONDARY_NONE=y
+
+# --- C++ ---
+CONFIG_COMPILER_CXX_EXCEPTIONS=y
+CONFIG_COMPILER_CXX_RTTI=y
+
+# --- FreeRTOS ---
+CONFIG_FREERTOS_HZ=1000
+
+# --- human_face_detect / human_face_recognition model saklama yeri ---
+# Modeli app binary'sinin .rodata bolumune gomer; ayri bir model
+# partition'i gerektirmez (en basit secenek, ogrenci kurulumu icin uygundur).
+CONFIG_HUMAN_FACE_DETECT_MODEL_IN_FLASH_RODATA=y
+CONFIG_HUMAN_FACE_FEAT_MODEL_IN_FLASH_RODATA=y
+# face_engine.cpp, HumanFaceDetect::ESPDET_PICO_224_224_FACE'i acikca
+# kullaniyor; bu modelin flash'a gomulmesi icin asagidaki secenek sart
+# (varsayilan olarak kapalidir, sadece MSRMNP_S8_V1 acik gelir).
+CONFIG_FLASH_ESPDET_PICO_224_224_FACE=y
+CONFIG_FLASH_HUMAN_FACE_FEAT_MFN_S8_V1=y
