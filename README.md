@@ -1,40 +1,40 @@
-# ESP32-S3 AI CAM — Operatör Tanımalı Makine Yetkilendirme Sistemi
+# ESP32-S3 AI CAM — Operator-Recognition Machine Authorization System
 
-Meslek lisesi elektrik-elektronik atölyesi için eğitim amaçlı demo. Yüz
-tanıma ile kayıtlı bir operatör doğrulanırsa bir GPIO üzerinden "çalışmaya
-izin" sinyali üretir (röle/optokuplör → PLC girişi veya kontaktör bobini).
+An educational demo for a vocational high school electrical/electronics
+workshop. When face recognition verifies an enrolled operator, it produces a
+"permission to run" signal on a GPIO (relay/optocoupler -> PLC input or
+contactor coil).
 
-## ⚠️ GÜVENLİK / EMNİYET UYARISI (mutlaka okuyun)
+## ⚠️ SAFETY WARNING (read this first)
 
-1. **Bu sistemin ürettiği "izin" sinyali makineyi DOĞRUDAN çalıştırmaz.**
-   Sadece makinenin fiziksel start butonunu "aktif" hale getirir. Operatör
-   makineyi çalıştırmak için yine de fiziksel start butonuna basmalıdır.
-   Röle çıkışını asla motor/kontaktör gücüne veya PLC'nin "run" hattına
-   doğrudan bağlamayın.
-2. **Bu sistemde canlılık tespiti (liveness) YOKTUR.** Bir fotoğrafla veya
-   ekrandan gösterilen bir görüntüyle kandırılabilir. Gerçek/üretim bir
-   yetkilendirme sisteminde mutlaka ikinci bir faktör eklenmelidir (örn.
-   RFID kart okuma veya PIN kodu girişi, "VE" mantığıyla).
-3. **Acil-stop butonu, kapı/guard switch'i gibi emniyet devreleri bu
-   yazılımdan tamamen bağımsız olmalıdır.** Yazılım donarsa, hatalı "izin"
-   üretirse veya çökerse/resetlenirse dahi bu fiziksel emniyetler makineyi
-   durdurabilmelidir.
+1. **The "permission" signal this system produces does NOT start the machine
+   directly.** It only arms the machine's physical start button. The operator
+   must still press that physical start button to run the machine. Never wire
+   the relay output directly to motor/contactor power or to a PLC's "run" line.
+2. **This system has NO liveness detection.** It can be fooled by a photograph
+   or by an image shown on a screen. A real/production authorization system
+   must add a second factor (e.g. an RFID card read or a PIN entry, combined
+   with AND logic).
+3. **Safety circuits such as the emergency-stop button and door/guard switches
+   must be completely independent of this software.** Those physical safety
+   measures must still be able to stop the machine even if the software hangs,
+   produces a wrong "permission", or crashes and resets.
 
-## Donanım
+## Hardware
 
-- Kart: ESP32-S3 AI CAM (OV3660 3MP kamera, 8MB PSRAM, 16MB Flash)
-- 1x optokuplör/röle modülü (GPIO → PLC girişi / kontaktör bobini)
-- 2x LED (yeşil: izin verildi, kırmızı: reddedildi) + 220-330Ω dirençler
-- Opsiyonel: microSD kart modülü (SPI)
+- Board: ESP32-S3 AI CAM (OV3660 3MP camera, 8MB PSRAM, 16MB Flash)
+- 1x optocoupler/relay module (GPIO -> PLC input / contactor coil)
+- 2x LED (green: granted, red: denied) + 220-330Ω resistors
+- Optional: microSD card module (SPI)
 
-### Pin haritası (`main/pin_config.h`)
+### Pin map (`main/pin_config.h`)
 
-"ESP32-S3 AI CAM" adıyla satılan kartların tek bir resmi pinout'u yoktur;
-aşağıdaki kamera pinleri yaygın klonlara göre **varsayımdır**. Kartınız
-farklıysa **sadece `main/pin_config.h` dosyasını güncelleyin**, başka
-hiçbir dosyaya dokunmanız gerekmez.
+Boards sold under the name "ESP32-S3 AI CAM" have no single official pinout;
+the camera pins below are an **assumption** based on common clones. If your
+board differs, **update only `main/pin_config.h`** — no other file needs to be
+touched.
 
-| Sinyal | GPIO |
+| Signal | GPIO |
 |---|---|
 | XCLK | 15 |
 | SIOD/SDA | 4 |
@@ -43,135 +43,134 @@ hiçbir dosyaya dokunmanız gerekmez.
 | VSYNC | 6 |
 | HREF | 7 |
 | PCLK | 13 |
-| Röle çıkışı | 21 |
-| Yeşil LED | 47 |
-| Kırmızı LED | 48 |
-| Kayıt (enroll) butonu | 0 (BOOT) |
-| SD CS / MOSI / MISO / SCK (opsiyonel) | 39 / 40 / 41 / 42 |
+| Relay output | 21 |
+| Green LED | 47 |
+| Red LED | 48 |
+| Enroll button | 0 (BOOT) |
+| SD CS / MOSI / MISO / SCK (optional) | 39 / 40 / 41 / 42 |
 
-### Bağlantı şeması (metin)
+### Wiring (in words)
 
-- **Kamera**: Karta lehimli/dahili, harici kablolama gerekmez.
-- **Röle modülü**: `RELAY_OUTPUT_GPIO` (GPIO21) → röle modülünün IN pini.
-  Röle modülünün VCC/GND'sini mümkünse ayrı bir 3.3V/5V kaynaktan besleyin
-  (bobin akımı board regülatörünü zorlayabilir). Röle NO/COM kontakları
-  PLC girişine veya kontaktör bobinine gider.
-- **Yeşil LED**: GPIO47 → 220-330Ω direnç → LED anot; katot → GND.
-- **Kırmızı LED**: GPIO48 → aynı şekilde.
-- **SD kart (opsiyonel)**: SPI modu, CS=39, MOSI=40, MISO=41, SCK=42.
+- **Camera**: soldered/onboard, no external wiring needed.
+- **Relay module**: `RELAY_OUTPUT_GPIO` (GPIO21) -> the relay module's IN pin.
+  Where possible, power the relay module's VCC/GND from a separate 3.3V/5V
+  supply (the coil current can strain the board regulator). The relay NO/COM
+  contacts go to the PLC input or the contactor coil.
+- **Green LED**: GPIO47 -> 220-330Ω resistor -> LED anode; cathode -> GND.
+- **Red LED**: GPIO48 -> same arrangement.
+- **SD card (optional)**: SPI mode, CS=39, MOSI=40, MISO=41, SCK=42.
 
-## Yazılım Mimarisi
+## Software architecture
 
 ```
 main/
-  pin_config.h        - Tüm pin tanımları (tek yer)
-  app_main.cpp         - Başlatma sırası + ana döngü
-  camera_module.*      - Kamera init + img_t dönüşümü
-  face_engine.*         - HumanFaceDetect + HumanFaceFeat, kendi cosine-
-                          similarity eşleştirmesi ve yapılandırılabilir eşik
-  operator_store.*      - Operatör kayıtları (FATFS "facedb" partition)
-  settings.*            - NVS: eşik ve izin süresi
-  auth_output.*         - Röle + LED kontrolü, N sn sonra otomatik kapatma
-  access_log.*          - Seri port + opsiyonel SD CSV logu
-  sd_card.*             - Opsiyonel SPI SD mount
-  serial_cli.*          - Komut satırı arayüzü
+  pin_config.h        - All pin definitions (single place)
+  app_main.cpp         - Startup sequence + main loop
+  camera_module.*      - Camera init + img_t conversion
+  face_engine.*         - HumanFaceDetect + HumanFaceFeat, with our own
+                          cosine-similarity matching and configurable threshold
+  operator_store.*      - Operator records (FATFS "facedb" partition)
+  settings.*            - NVS: threshold and permission duration
+  auth_output.*         - Relay + LED control, auto-off after N seconds
+  access_log.*          - Serial port + optional SD CSV log
+  sd_card.*             - Optional SPI SD mount
+  serial_cli.*          - Command line interface
 ```
 
-### Önemli tasarım notu: neden özel eşik mantığı?
+### Key design note: why custom threshold logic?
 
-esp-who'nun hazır `HumanFaceRecognizer` sınıfı benzerlik eşiğini (`0.5`)
-kodun içinde sabitler ve değiştirmek için genel bir metot sunmaz. Bu
-projede eşiğin yapılandırılabilir olması istendiği için `HumanFaceDetect`
-+ `HumanFaceFeat` doğrudan kullanılıyor; karşılaştırma (cosine similarity)
-ve eşik kontrolü `face_engine.cpp` içinde kendi kodumuzla yapılıyor. Bu
-yaklaşımın bir faydası da öğrencilerin "benzerlik eşiği" kavramını kod
-üzerinde birebir görebilmesi.
+esp-who's ready-made `HumanFaceRecognizer` class hardcodes the similarity
+threshold (`0.5`) and offers no public method to change it. This project wanted
+the threshold to be configurable, so it uses `HumanFaceDetect` +
+`HumanFaceFeat` directly; the comparison (cosine similarity) and the threshold
+check are done by our own code in `face_engine.cpp`. A side benefit is that
+students can see the "similarity threshold" concept directly in the code.
 
-## Operatör Tanıtma (Enrollment)
+## Enrolling an operator
 
-İki yol var:
+Two ways:
 
-1. **Seri komutla (isim verilebildiği için önerilir):**
+1. **Via serial command (preferred, since you can supply a name):**
    ```
    operator-auth> enroll Ahmet
    ```
-   Sistem 3 saniyelik geri sayım gösterir, operatör kameraya bakar, yüz
-   tespit edilip özniteliği çıkarılır ve kaydedilir.
+   The system shows a 3-second countdown, the operator looks at the camera, the
+   face is detected, its feature vector is extracted and stored.
 
-2. **BOOT tuşuyla (isim giremediği için otomatik isim):** Kart çalışırken
-   BOOT tuşuna kısa basış aynı akışı `operator_N` gibi otomatik bir isimle
-   başlatır. Sonradan `list` ile hangi id'nin kime ait olduğunu
-   eşleştirebilirsiniz.
+2. **Via the BOOT button (automatic name, since you cannot type one):** with the
+   board running, a short press of BOOT starts the same flow with an automatic
+   name like `operator_N`. You can match ids to people afterwards with `list`.
 
-### Diğer komutlar
+### Other commands
 
-| Komut | Açıklama |
+| Command | Description |
 |---|---|
-| `list` | Kayıtlı operatörleri id/isim/kayıt zamanıyla listeler |
-| `delete <id>` | Operatörü siler |
-| `set-threshold <0..1>` | Benzerlik eşiğini ayarlar (varsayılan `0.55`) |
-| `set-duration <sn>` | İzin süresini ayarlar (varsayılan `5`) |
-| `status` | Güncel eşik, süre ve operatör sayısını gösterir |
+| `list` | Lists enrolled operators with id/name/enrollment time |
+| `delete <id>` | Deletes an operator |
+| `set-threshold <0..1>` | Sets the similarity threshold (default `0.55`) |
+| `set-duration <s>` | Sets the permission duration (default `5`) |
+| `status` | Shows the current threshold, duration and operator count |
 
-En fazla **10 operatör** desteklenir. `enroll` komutu doluysa reddedilir.
+At most **10 operators** are supported. `enroll` is rejected when full.
 
-## Kurulum
+## Setup
 
-### 1. ESP-IDF v5.2 kurulumu (Windows)
+### 1. Installing ESP-IDF v5.2 (Windows)
 
-- [ESP-IDF Windows kurulum kılavuzunu](https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32s3/get-started/windows-setup.html)
-  izleyerek ESP-IDF v5.2'yi kurun (VS Code "ESP-IDF" eklentisi ile veya
-  "ESP-IDF Tools" kurulumuyla).
-- VS Code'da `ESP-IDF: Configure ESP-IDF Extension` ile v5.2 ortamını seçin.
+- Install ESP-IDF v5.2 by following the
+  [ESP-IDF Windows setup guide](https://docs.espressif.com/projects/esp-idf/en/v5.2/esp32s3/get-started/windows-setup.html)
+  (either with the VS Code "ESP-IDF" extension or the "ESP-IDF Tools"
+  installer).
+- In VS Code, select the v5.2 environment via
+  `ESP-IDF: Configure ESP-IDF Extension`.
 
-### 2. Projeyi açma ve hedef seçme
+### 2. Opening the project and setting the target
 
 ```
 idf.py set-target esp32s3
 ```
 
-Bu adım `idf_component.yml` içindeki bağımlılıkları (esp32-camera,
-human_face_detect, human_face_recognition → bunlar esp-dl'i otomatik
-çeker) internetten indirir.
+This step downloads the dependencies listed in `idf_component.yml`
+(esp32-camera, human_face_detect, human_face_recognition — these pull in
+esp-dl automatically) from the internet.
 
-### 3. menuconfig kontrolü
+### 3. Checking menuconfig
 
-`sdkconfig.defaults` gerekli ayarları (PSRAM Octal/80MHz, özel partition
-tablosu, USB-Serial/JTAG konsol, C++ exceptions, model saklama yeri)
-zaten içerir. Yine de doğrulamak isterseniz:
+`sdkconfig.defaults` already contains the required settings (PSRAM Octal/80MHz,
+custom partition table, USB-Serial/JTAG console, C++ exceptions, model storage
+location). If you want to verify them anyway:
 
 ```
 idf.py menuconfig
 ```
 
-- `Component config → ESP PSRAM` → Octal Mode, 80MHz açık olmalı.
-- `Serial flasher config → Flash size` → 16 MB.
-- `Component config → human_face_detect` / `human_face_recognition` →
-  model varyantı (ESPDET_PICO_224_224_FACE / MFN_S8_V1) seçili olmalı.
-- SD kart kullanacaksanız: `Operator Yetkilendirme Uygulaması →
-  SD karta erişim logu yaz` seçeneğini açın.
+- `Component config -> ESP PSRAM` -> Octal Mode, 80MHz must be enabled.
+- `Serial flasher config -> Flash size` -> 16 MB.
+- `Component config -> human_face_detect` / `human_face_recognition` -> the
+  model variant (ESPDET_PICO_224_224_FACE / MFN_S8_V1) must be selected.
+- If you will use an SD card: enable
+  `Operator Authorization Application -> Write access log to SD card`.
 
-### 4. Derleme, yükleme, izleme
+### 4. Build, flash, monitor
 
 ```
 idf.py build
 idf.py -p COMx flash monitor
 ```
 
-(`COMx` yerine kartın bağlı olduğu seri portu yazın; Aygıt Yöneticisi'nden
-kontrol edebilirsiniz.)
+(Replace `COMx` with the serial port the board is attached to; you can check it
+in Device Manager.)
 
-### Derlerken karşılaşabileceğiniz noktalar
+### Things you may hit while building
 
-- **`HumanFaceFeat`/`TensorBase` veri tipi**: `face_engine.cpp` içindeki
-  `tensor_to_float()` fonksiyonu modelin çıktısının `float` ya da `int8`
-  (nicelenmiş) olmasına göre iki yol izler. esp-dl sürümünüzde farklı bir
-  tip dönerse derleyici/çalışma zamanı uyarısı verir; bu fonksiyonu o
-  sürümün `dl_tensor_base.hpp` tanımına göre güncelleyin.
-- **Öznitelik vektörü uzunluğu**: `operator_store.h` içindeki
-  `OPERATOR_FEAT_LEN` (512) `HumanFaceFeat::get_feat_len()` ile
-  karşılaştırılır (`face_engine_init()` içinde); uyuşmazsa net bir hata
-  logu basar ve başlatmayı durdurur.
-- **Kamera pin/format uyumu**: OV3660 farklı bir klonda farklı XCLK
-  frekansı gerektirebilir; görüntü bozuksa `CAM_XCLK_FREQ_HZ` değerini
-  (`pin_config.h`) 24000000 gibi bir değerle deneyin.
+- **`HumanFaceFeat`/`TensorBase` data type**: the `tensor_to_float()` function
+  in `face_engine.cpp` takes one of two paths depending on whether the model
+  output is `float` or `int8` (quantized). If your esp-dl version returns a
+  different type, the compiler or runtime will warn; update that function to
+  match that version's `dl_tensor_base.hpp` definition.
+- **Feature vector length**: `OPERATOR_FEAT_LEN` (512) in `operator_store.h` is
+  compared against `HumanFaceFeat::get_feat_len()` (inside
+  `face_engine_init()`); on a mismatch it logs a clear error and halts startup.
+- **Camera pin/format compatibility**: OV3660 on a different clone may need a
+  different XCLK frequency; if the image is corrupted, try a value such as
+  24000000 for `CAM_XCLK_FREQ_HZ` (in `pin_config.h`).

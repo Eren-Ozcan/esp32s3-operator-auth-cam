@@ -1,13 +1,13 @@
-menu "Operator Yetkilendirme Uygulamasi"
+menu "Operator Authorization Application"
 
     config APP_ENABLE_SD_CARD
-        bool "SD karta erisim logu yaz (opsiyonel)"
+        bool "Write access log to SD card (optional)"
         default n
         help
-            Etkinlestirilirse sistem acilista SPI modunda bir SD kart mount
-            etmeye calisir ve her tanima denemesini /sdcard/access_log.csv
-            dosyasina ekler. SD kart takili degilse veya bu secenek kapaliysa
-            erisim loglari yalnizca seri porta yazilir; sistem bu ozellik
-            olmadan da tam calisir.
+            When enabled, the system tries to mount an SD card in SPI mode at
+            startup and appends every recognition attempt to
+            /sdcard/access_log.csv. If no SD card is inserted, or this option
+            is disabled, access logs are written to the serial port only; the
+            system works fully without this feature.
 
 endmenu
