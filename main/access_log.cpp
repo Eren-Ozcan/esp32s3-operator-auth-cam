@@ -10,7 +10,7 @@ static const char *LOG_FILE = "/sdcard/access_log.csv";
 esp_err_t access_log_init(void)
 {
     if (sd_card_is_mounted()) {
-        /* Dosya yoksa baslik satiriyla olustur. */
+        /* Create the file with a header row when it does not exist. */
         FILE *f = fopen(LOG_FILE, "r");
         if (f == NULL) {
             f = fopen(LOG_FILE, "w");

@@ -1,11 +1,12 @@
 /*
  * app_main.cpp
  * -----------------------------------------------------------------------
- * Giris noktasi: tum modulleri sirayla baslatir, ardindan surekli calisan
- * "yakala -> tespit et -> karsilastir -> cikis ver" dongusunu yurutur.
+ * Entry point: initializes all modules in order, then runs the continuous
+ * "capture -> detect -> compare -> drive output" loop.
  *
- * Bu dosya EGITIM AMACLIDIR; akisi tek bir yerde, adim adim gorebilmeniz
- * icin bilincli olarak sade (tek FreeRTOS task'i) tutulmustur.
+ * This file is FOR TEACHING; it is deliberately kept simple (a single
+ * FreeRTOS task) so that the whole flow can be followed step by step in one
+ * place.
  */
 #include "pin_config.h"
 #include "camera_module.h"
@@ -36,9 +37,9 @@ static void enroll_button_init(void)
     gpio_config(&conf);
 }
 
-/* BOOT tusuna basisi algilar (kenar tetiklemeli, basit debounce). Isim
- * girilemedigi icin otomatik "operator_N" ismiyle kayit istegi birakir;
- * ozel isim istiyorsaniz seri porttan "enroll <isim>" kullanin. */
+/* Detects a BOOT button press (edge triggered, simple debounce). Since no
+ * name can be typed, it leaves an enrollment request with an automatic
+ * "operator_N" name; for a custom name use "enroll <name>" over serial. */
 static bool enroll_button_pressed_edge(void)
 {
     static bool was_pressed = false;
@@ -50,9 +51,9 @@ static bool enroll_button_pressed_edge(void)
     return edge;
 }
 
-/* Kayit akisi: 3 saniyelik geri sayim -> kare al -> oznitelik cikar ->
- * operator_store'a ekle. Kamera erisiminin tek noktadan (bu dongu
- * gorevinden) yapilmasini saglamak icin ana dongude cagrilir. */
+/* Enrollment flow: 3-second countdown -> grab a frame -> extract features ->
+ * add to operator_store. Called from the main loop so that camera access
+ * happens from a single place (this loop task). */
 static void perform_enrollment(const char *name)
 {
     printf("\n>>> Kayit basliyor: '%s'. Kameraya bakin. <<<\n", name);
@@ -123,8 +124,8 @@ static void main_loop(void)
                 access_log_record(false, -1, "bilinmiyor", result.similarity);
             }
         }
-        /* Yuz tespit edilmediyse hicbir sey loglanmaz (bos kare spam'ini
-         * onlemek icin) ve mevcut rolo/LED durumu degistirilmez. */
+        /* When no face is detected nothing is logged (to avoid spamming on
+         * empty frames) and the current relay/LED state is left alone. */
 
         vTaskDelay(pdMS_TO_TICKS(150));
     }

@@ -29,11 +29,11 @@ esp_err_t camera_module_init(void)
     config.ledc_timer = LEDC_TIMER_0;
     config.ledc_channel = LEDC_CHANNEL_0;
 
-    /* RGB565: yuz tespit/tanima modelleri dogrudan piksel matrisi ister,
-     * JPEG cozme adimindan kacinip gecikmeyi dusurur. */
+    /* RGB565: the face detection/recognition models want a raw pixel matrix,
+     * which avoids a JPEG decode step and lowers latency. */
     config.pixel_format = PIXFORMAT_RGB565;
-    /* 240x240 civari (FRAMESIZE_240X240) hem yuz tespiti icin yeterli
-     * cozunurluk saglar hem de PSRAM/isleme yukunu makul tutar. */
+    /* Around 240x240 (FRAMESIZE_240X240) gives enough resolution for face
+     * detection while keeping PSRAM/processing load reasonable. */
     config.frame_size = FRAMESIZE_240X240;
     config.fb_count = 2;
     config.fb_location = CAMERA_FB_IN_PSRAM;
@@ -47,7 +47,7 @@ esp_err_t camera_module_init(void)
 
     sensor_t *sensor = esp_camera_sensor_get();
     if (sensor != NULL && sensor->id.PID == OV3660_PID) {
-        /* OV3660'in varsayilan goruntusu ters ve fazla doygun renklidir. */
+        /* The OV3660's default image is upside down and oversaturated. */
         sensor->set_vflip(sensor, 1);
         sensor->set_brightness(sensor, 1);
         sensor->set_saturation(sensor, -2);

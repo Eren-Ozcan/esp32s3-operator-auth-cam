@@ -46,8 +46,8 @@ esp_err_t settings_set_threshold(float threshold)
     if (err != ESP_OK) {
         return err;
     }
-    /* NVS'de float saklamak yerine milli-birim (binde bir) tam sayi
-     * kullaniyoruz; tum ESP-IDF surumlerinde sorunsuz calisir. */
+    /* Instead of storing a float in NVS we use a milli-unit (thousandths)
+     * integer; that works reliably across all ESP-IDF versions. */
     err = nvs_set_u32(handle, KEY_THRESHOLD, (uint32_t)(threshold * 1000.0f));
     if (err == ESP_OK) {
         err = nvs_commit(handle);

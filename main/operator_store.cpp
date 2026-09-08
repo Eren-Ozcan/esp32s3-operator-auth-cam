@@ -142,8 +142,8 @@ esp_err_t operator_store_delete(uint8_t id)
 {
     for (int i = 0; i < s_count; i++) {
         if (s_records[i].id == id) {
-            /* Silinen kaydin yerini son kayitla doldur (sirali olmasi
-             * onemli degil, id her zaman kayit icinde saklaniyor). */
+            /* Fill the deleted record's slot with the last record (order
+             * does not matter, the id is always stored inside the record). */
             s_records[i] = s_records[s_count - 1];
             s_count--;
             save_to_file();

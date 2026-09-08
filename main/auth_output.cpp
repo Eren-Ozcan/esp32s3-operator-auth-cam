@@ -49,8 +49,9 @@ void auth_output_grant(uint32_t seconds)
     gpio_set_level(LED_GREEN_GPIO, 1);
     gpio_set_level(LED_RED_GPIO, 0);
 
-    /* Onceki zamanlayici hala calisiyorsa iptal edip yeniden baslat
-     * (art arda basarili tanimalarda sure her seferinde yenilenir). */
+    /* If a previous timer is still running, cancel and restart it (on
+     * consecutive successful recognitions the duration is refreshed each
+     * time). */
     esp_timer_stop(s_grant_timer);
     esp_timer_start_once(s_grant_timer, (uint64_t)seconds * 1000000ULL);
 }

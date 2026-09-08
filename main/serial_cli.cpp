@@ -95,7 +95,7 @@ static int cmd_list(int argc, char **argv)
     return 0;
 }
 
-/* --- set-threshold <deger> --- */
+/* --- set-threshold <value> --- */
 static struct {
     struct arg_dbl *value;
     struct arg_end *end;

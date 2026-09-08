@@ -16,8 +16,8 @@ static HumanFaceFeat *s_feat = nullptr;
 
 esp_err_t face_engine_init(void)
 {
-    /* lazy_load=false: modelleri baslangicta yukle, ilk tanima aninda
-     * beklenmedik gecikme olmasin. */
+    /* lazy_load=false: load the models at startup so there is no unexpected
+     * delay at the moment of the first recognition. */
     s_detect = new HumanFaceDetect(HumanFaceDetect::ESPDET_PICO_224_224_FACE, false);
     s_feat = new HumanFaceFeat(HumanFaceFeat::MFN_S8_V1, false);
 
@@ -46,9 +46,9 @@ static const dl::detect::result_t *pick_largest_face(const std::list<dl::detect:
     return &(*it);
 }
 
-/* TensorBase'in ham verisini float diziye cevirir. Model ciktisi float ise
- * dogrudan kopyalanir; int8 (nicelenmis) ise DL_SCALE(exponent) ile
- * dogru olcege cevrilir (bkz. esp-dl dl_define.hpp). */
+/* Converts TensorBase's raw data into a float array. If the model output is
+ * float it is copied directly; if it is int8 (quantized) it is scaled
+ * correctly with DL_SCALE(exponent) (see esp-dl dl_define.hpp). */
 static bool tensor_to_float(dl::TensorBase *tensor, float *out, int max_len)
 {
     if (tensor == nullptr) {
