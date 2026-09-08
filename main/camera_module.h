@@ -1,12 +1,12 @@
 /*
  * camera_module.h
  * -----------------------------------------------------------------------
- * OV3660 kamerayi (esp32-camera surucusu uzerinden) baslatir ve yakalanan
- * kareyi ESP-DL'in bekledigi dl::image::img_t formatina cevirir.
+ * Initializes the OV3660 camera (through the esp32-camera driver) and
+ * converts a captured frame into the dl::image::img_t format ESP-DL expects.
  *
- * NOT: Proje tamamen C++ olarak derlendigi icin (app_main dahil) burada
- * extern "C" sarmalamaya gerek yoktur; sadece app_main() giris noktasi
- * ESP-IDF tarafindan C linkage ile aranir (bkz. app_main.cpp).
+ * NOTE: the whole project is compiled as C++ (including app_main), so no
+ * extern "C" wrapping is needed here; only the app_main() entry point is
+ * looked up with C linkage by ESP-IDF (see app_main.cpp).
  */
 #pragma once
 
@@ -14,19 +14,19 @@
 #include "esp_camera.h"
 #include "dl_image_define.hpp"
 
-/* Kamerayi pin_config.h'deki pinlerle baslatir. PIXFORMAT_RGB565 kullanilir
- * (JPEG degil) cunku ESP-DL modelleri dogrudan piksel verisi bekler; her
- * karede JPEG cozme adimindan kacinilarak gecikme dusurulur. */
+/* Initializes the camera with the pins from pin_config.h. PIXFORMAT_RGB565 is
+ * used (not JPEG) because ESP-DL models expect raw pixel data; skipping a JPEG
+ * decode step on every frame lowers latency. */
 esp_err_t camera_module_init(void);
 
-/* Bir kare yakalar. Donen isaretci camera_module_release() ile geri
- * verilmelidir. Basarisizlikta nullptr doner. */
+/* Captures one frame. The returned pointer must be given back with
+ * camera_module_release(). Returns nullptr on failure. */
 camera_fb_t *camera_module_capture(void);
 
-/* camera_module_capture() ile alinan tamponu surucuye iade eder. */
+/* Returns a buffer obtained from camera_module_capture() to the driver. */
 void camera_module_release(camera_fb_t *fb);
 
-/* Yakalanan RGB565 kareyi, veriyi KOPYALAMADAN (ayni bellegi isaret ederek)
- * ESP-DL'in img_t yapisina sarmalar. Donen img_t, fb gecerli oldugu surece
- * kullanilabilir; fb serbest birakilmadan once img_t kullanimi bitirilmelidir. */
+/* Wraps the captured RGB565 frame into ESP-DL's img_t struct WITHOUT COPYING
+ * the data (it points at the same memory). The returned img_t is usable as
+ * long as fb is valid; finish using it before fb is released. */
 dl::image::img_t camera_fb_to_img(const camera_fb_t *fb);

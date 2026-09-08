@@ -1,24 +1,24 @@
 /*
  * settings.h
  * -----------------------------------------------------------------------
- * Kalici (NVS destekli) yapilandirma: benzerlik esigi ve izin suresi.
- * serial_cli'daki set-threshold / set-duration komutlariyla degistirilir
- * ve reset sonrasi da korunur.
+ * Persistent (NVS-backed) configuration: similarity threshold and permission
+ * duration. Changed with the set-threshold / set-duration commands in
+ * serial_cli, and preserved across resets.
  */
 #pragma once
 
 #include "esp_err.h"
 
-#define SETTINGS_DEFAULT_THRESHOLD    0.55f  /* Cosine similarity esigi; sinifta test edip ayarlayin. */
-#define SETTINGS_DEFAULT_GRANT_SECONDS 5      /* Izin GPIO'sunun acik kalacagi sure (sn). */
+#define SETTINGS_DEFAULT_THRESHOLD    0.55f  /* Cosine similarity threshold; test in class and tune. */
+#define SETTINGS_DEFAULT_GRANT_SECONDS 5      /* How long the permission GPIO stays on (s). */
 
-/* NVS'yi baslatir (esp_nvs flash init'in kendisi app_main'de yapilir, bu
- * fonksiyon sadece ilgili namespace'i acar) ve kayitli degerleri okur;
- * yoksa varsayilanlari kullanir. */
+/* Initializes NVS (the esp_nvs flash init itself happens in app_main; this
+ * function only opens the relevant namespace) and reads the stored values,
+ * falling back to the defaults when there are none. */
 esp_err_t settings_init(void);
 
 float settings_get_threshold(void);
-esp_err_t settings_set_threshold(float threshold); /* 0.0-1.0 araligi disinda ESP_ERR_INVALID_ARG doner */
+esp_err_t settings_set_threshold(float threshold); /* Returns ESP_ERR_INVALID_ARG outside the 0.0-1.0 range */
 
 uint32_t settings_get_grant_seconds(void);
-esp_err_t settings_set_grant_seconds(uint32_t seconds); /* 0 gecersiz */
+esp_err_t settings_set_grant_seconds(uint32_t seconds); /* 0 is invalid */
